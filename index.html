@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圣诞树</title>
+    <style>
+        /* 重置默认样式，让页面更整洁 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 页面背景：深色渐变，模拟夜晚 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(#040228, #000);
+        }
+
+        /* 圣诞树容器：居中定位 */
+        .christmas-tree {
+            position: relative;
+        }
+
+        /* 星星：圣诞树顶部，带闪烁动画 */
+        .star {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            background: #ffd700;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            animation: blink 1.5s infinite alternate;
+        }
+
+        /* 星星闪烁动画 */
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.7; }
+        }
+
+        /* 圣诞树冠：三层绿色渐变的三角形 */
+        .tree-top {
+            width: 0;
+            height: 0;
+            border-left: 100px solid transparent;
+            border-right: 100px solid transparent;
+            border-bottom: 150px solid #006400;
+            position: relative;
+        }
+
+        .tree-middle {
+            width: 0;
+            height: 0;
+            border-left: 80px solid transparent;
+            border-right: 80px solid transparent;
+            border-bottom: 120px solid #008000;
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .tree-bottom {
+            width: 0;
+            height: 0;
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-bottom: 90px solid #32cd32;
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* 树干：棕色矩形 */
+        .tree-trunk {
+            width: 30px;
+            height: 60px;
+            background: #8b4513;
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 5px;
+        }
+
+        /* 装饰球：不同颜色、位置，带轻微晃动动画 */
+        .ornament {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            animation: swing 2s infinite alternate;
+        }
+
+        /* 装饰球晃动动画 */
+        @keyframes swing {
+            from { transform: rotate(-5deg); }
+            to { transform: rotate(5deg); }
+        }
+
+        /* 逐个定位装饰球 */
+        .ornament1 {
+            top: 40px;
+            left: 30%;
+            background: #ff0000;
+        }
+
+        .ornament2 {
+            top: 70px;
+            left: 70%;
+            background: #0000ff;
+        }
+
+        .ornament3 {
+            top: 100px;
+            left: 40%;
+            background: #ff69b4;
+        }
+
+        .ornament4 {
+            top: 80px;
+            left: 20%;
+            background: #ffff00;
+        }
+
+        .ornament5 {
+            top: 110px;
+            right: 20%;
+            background: #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="christmas-tree">
+        <!-- 顶部星星 -->
+        <div class="star"></div>
+        
+        <!-- 圣诞树冠（三层） -->
+        <div class="tree-top"></div>
+        <div class="tree-middle"></div>
+        <div class="tree-bottom"></div>
+        
+        <!-- 树干 -->
+        <div class="tree-trunk"></div>
+        
+        <!-- 装饰球 -->
+        <div class="ornament ornament1"></div>
+        <div class="ornament ornament2"></div>
+        <div class="ornament ornament3"></div>
+        <div class="ornament ornament4"></div>
+        <div class="ornament ornament5"></div>
+    </div>
+</body>
+</html>
