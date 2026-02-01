@@ -3,160 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>圣诞树</title>
+    <title>精致的圣诞树 (修复版)</title>
     <style>
-        /* 重置默认样式，让页面更整洁 */
-        * {
+        /* CSS 部分：保持不变 */
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        /* 页面背景：深色渐变，模拟夜晚 */
-        body {
+            overflow: hidden;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(#040228, #000);
+            font-family: 'Arial', sans-serif;
         }
 
-        /* 圣诞树容器：居中定位 */
-        .christmas-tree {
-            position: relative;
+        canvas {
+            display: block;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
         }
 
-        /* 星星：圣诞树顶部，带闪烁动画 */
-        .star {
+        .message {
             position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 60px;
-            background: #ffd700;
-            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-            animation: blink 1.5s infinite alternate;
+            bottom: 30px;
+            color: #f2d7a9;
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #d4af37;
+            pointer-events: none;
+            animation: fade-in 3s ease-in-out;
+            z-index: 10;
         }
 
-        /* 星星闪烁动画 */
-        @keyframes blink {
-            from { opacity: 1; }
-            to { opacity: 0.7; }
-        }
-
-        /* 圣诞树冠：三层绿色渐变的三角形 */
-        .tree-top {
-            width: 0;
-            height: 0;
-            border-left: 100px solid transparent;
-            border-right: 100px solid transparent;
-            border-bottom: 150px solid #006400;
-            position: relative;
-        }
-
-        .tree-middle {
-            width: 0;
-            height: 0;
-            border-left: 80px solid transparent;
-            border-right: 80px solid transparent;
-            border-bottom: 120px solid #008000;
-            position: absolute;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .tree-bottom {
-            width: 0;
-            height: 0;
-            border-left: 60px solid transparent;
-            border-right: 60px solid transparent;
-            border-bottom: 90px solid #32cd32;
-            position: absolute;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        /* 树干：棕色矩形 */
-        .tree-trunk {
-            width: 30px;
-            height: 60px;
-            background: #8b4513;
-            position: absolute;
-            bottom: -60px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 5px;
-        }
-
-        /* 装饰球：不同颜色、位置，带轻微晃动动画 */
-        .ornament {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            animation: swing 2s infinite alternate;
-        }
-
-        /* 装饰球晃动动画 */
-        @keyframes swing {
-            from { transform: rotate(-5deg); }
-            to { transform: rotate(5deg); }
-        }
-
-        /* 逐个定位装饰球 */
-        .ornament1 {
-            top: 40px;
-            left: 30%;
-            background: #ff0000;
-        }
-
-        .ornament2 {
-            top: 70px;
-            left: 70%;
-            background: #0000ff;
-        }
-
-        .ornament3 {
-            top: 100px;
-            left: 40%;
-            background: #ff69b4;
-        }
-
-        .ornament4 {
-            top: 80px;
-            left: 20%;
-            background: #ffff00;
-        }
-
-        .ornament5 {
-            top: 110px;
-            right: 20%;
-            background: #00ffff;
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
-    <div class="christmas-tree">
-        <!-- 顶部星星 -->
-        <div class="star"></div>
-        
-        <!-- 圣诞树冠（三层） -->
-        <div class="tree-top"></div>
-        <div class="tree-middle"></div>
-        <div class="tree-bottom"></div>
-        
-        <!-- 树干 -->
-        <div class="tree-trunk"></div>
-        
-        <!-- 装饰球 -->
-        <div class="ornament ornament1"></div>
-        <div class="ornament ornament2"></div>
-        <div class="ornament ornament3"></div>
-        <div class="ornament ornament4"></div>
-        <div class="ornament ornament5"></div>
-    </div>
+
+    <canvas id="christmasCanvas"></canvas>
+    <div class="message">Merry Christmas & Happy New Year</div>
+
+    <script>
+        const canvas = document.getElementById('christmasCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let tree;
+        let lights = [];
+        let snow = [];
+        let baubles = [];
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            init();
+        }
+
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        // --- 核心修改在这里 (Tree 类) ---
+        class Tree {
+            constructor(w, h) {
+                this.x = w / 2;
+                this.y = h - 50; // 树的底部坐标（地面）
+                this.trunkWidth = 40;
+                this.trunkHeight = 100; // 稍微加高树干
+                
+                // 修复：大幅减小 yOffset，让树叶降下来盖住树干
+                this.layers = [
+                    // 最底层：yOffset 从 180 改为 80 (刚好盖住树干)
+                    { width: 340, height: 220, yOffset: 80 }, 
+                    // 第二层
+                    { width: 280, height: 190, yOffset: 220 },
+                    // 第三层
+                    { width: 200, height: 160, yOffset: 340 },
+                    // 顶层
+                    { width: 120, height: 120, yOffset: 440 }
+                ];
+            }
+
+            draw() {
+                // 1. 画树干
+                ctx.fillStyle = '#3e2723';
+                // 树干从底部 (this.y) 向上画 trunkHeight 的高度
+                ctx.fillRect(this.x - this.trunkWidth / 2, this.y - this.trunkHeight, this.trunkWidth, this.trunkHeight);
+
+                // 2. 画树冠层
+                this.layers.forEach(layer => {
+                    const baseY = this.y - layer.yOffset;
+                    
+                    for(let i=0; i<5; i++) {
+                        ctx.beginPath();
+                        const colorVar = random(-20, 20);
+                        ctx.fillStyle = `rgb(${20 + colorVar}, ${80 + colorVar}, ${30 + colorVar})`;
+                        
+                        ctx.moveTo(this.x, baseY - layer.height);
+                        ctx.quadraticCurveTo(
+                            this.x - layer.width / 2 - i*5, baseY + i*10, 
+                            this.x, baseY + i*5
+                        );
+                        ctx.quadraticCurveTo(
+                            this.x + layer.width / 2 + i*5, baseY + i*10, 
+                            this.x, baseY - layer.height
+                        );
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                });
+                
+                // 3. 画顶部的星星
+                const topLayer = this.layers[this.layers.length-1];
+                // 动态计算星星位置，确保它紧贴最上层树叶的尖端
+                const starY = this.y - topLayer.yOffset - topLayer.height;
+                this.drawStar(this.x, starY, 16, '#ffd700');
+            }
+
+            drawStar(cx, cy, outerRadius, color) {
+                let rot = Math.PI / 2 * 3;
+                let x = cx;
+                let y = cy;
+                let step = Math.PI / 5;
+                let innerRadius = outerRadius / 2.2;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - outerRadius);
+                for (let i = 0; i < 5; i++) {
+                    x = cx + Math.cos(rot) * outerRadius;
+                    y = cy + Math.sin(rot) * outerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+
+                    x = cx + Math.cos(rot) * innerRadius;
+                    y = cy + Math.sin(rot) * innerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+                }
+                ctx.lineTo(cx, cy - outerRadius);
+                ctx.closePath();
+                ctx.fillStyle = color;
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 30;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class Light {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.radius = random(3, 5);
+                this.color = color;
+                this.blinkSpeed = random(0.02, 0.05);
+                this.angle = random(0, Math.PI * 2);
+            }
+
+            draw() {
+                const alpha = (Math.sin(this.angle) + 1) / 2 * 0.8 + 0.2;
+                this.angle += this.blinkSpeed;
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 20 * alpha;
+                ctx.globalAlpha = alpha;
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1;
+                ctx.closePath();
+            }
+        }
+
+        class Bauble {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.radius = random(6, 10);
+                this.color = color;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+                let gradient = ctx.createRadialGradient(this.x - this.radius/3, this.y - this.radius/3, this.radius/10, this.x, this.y, this.radius);
+                gradient.addColorStop(0, 'white');
+                gradient.addColorStop(1, this.color);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        class Snowflake {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = random(0, width);
+                this.y = random(-height, 0);
+                this.radius = random(1, 3);
+                this.speed = random(1, 3);
+                this.drift = random(-0.5, 0.5);
+            }
+            update() {
+                this.y += this.speed;
+                this.x += this.drift;
+                if (this.y > height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        function init() {
+            tree = new Tree(width, height);
+            lights = [];
+            baubles = [];
+            snow = [];
+
+            const lightColors = ['#ff5f5f', '#ffff5f', '#5fffff', '#ff5fff'];
+            const baubleColors = ['#c0392b', '#d4af37', '#2980b9', '#27ae60'];
+
+            tree.layers.forEach((layer, index) => {
+                const count = (index + 1) * 12; // 稍微减少一点装饰物数量，避免太拥挤
+                const baseY = tree.y - layer.yOffset;
+                
+                for (let i = 0; i < count; i++) {
+                    const relativeY = random(0, layer.height);
+                    const currentWidth = layer.width * (relativeY / layer.height);
+                    // 修正装饰物生成范围，让它们更贴合新的树形
+                    const x = random(tree.x - currentWidth / 2 + 10, tree.x + currentWidth / 2 - 10);
+                    const y = baseY - relativeY;
+
+                    if (Math.random() > 0.3) {
+                         lights.push(new Light(x, y, lightColors[Math.floor(random(0, lightColors.length))]));
+                    } else {
+                        baubles.push(new Bauble(x, y, baubleColors[Math.floor(random(0, baubleColors.length))]));
+                    }
+                }
+            });
+
+            for(let i=0; i< 150; i++) {
+                snow.push(new Snowflake());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            snow.forEach(flake => {
+                flake.update();
+                flake.draw();
+            });
+            
+            tree.draw();
+            baubles.forEach(b => b.draw());
+            lights.forEach(light => light.draw());
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        animate();
+
+    </script>
 </body>
 </html>
