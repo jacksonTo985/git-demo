@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>精致的圣诞树 (修复版)</title>
+    <title>真实感圣诞树</title>
     <style>
-        /* CSS 部分：保持不变 */
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            background: radial-gradient(ellipse at bottom, #0f172a 0%, #000000 100%); /* 更深邃的夜空 */
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -32,20 +31,16 @@
             letter-spacing: 2px;
             text-shadow: 0 0 10px #d4af37;
             pointer-events: none;
-            animation: fade-in 3s ease-in-out;
             z-index: 10;
-        }
-
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            font-family: 'Times New Roman', serif; /* 更优雅的字体 */
+            font-style: italic;
         }
     </style>
 </head>
 <body>
 
     <canvas id="christmasCanvas"></canvas>
-    <div class="message">Merry Christmas & Happy New Year</div>
+    <div class="message">Merry Christmas</div>
 
     <script>
         const canvas = document.getElementById('christmasCanvas');
@@ -69,61 +64,105 @@
             return Math.random() * (max - min) + min;
         }
 
-        // --- 核心修改在这里 (Tree 类) ---
+        // --- 核心修改：新的树类 ---
         class Tree {
             constructor(w, h) {
                 this.x = w / 2;
-                this.y = h - 50; // 树的底部坐标（地面）
-                this.trunkWidth = 40;
-                this.trunkHeight = 100; // 稍微加高树干
+                this.y = h - 50; 
+                this.trunkWidth = 30;
+                this.trunkHeight = 80;
                 
-                // 修复：大幅减小 yOffset，让树叶降下来盖住树干
-                this.layers = [
-                    // 最底层：yOffset 从 180 改为 80 (刚好盖住树干)
-                    { width: 340, height: 220, yOffset: 80 }, 
-                    // 第二层
-                    { width: 280, height: 190, yOffset: 220 },
-                    // 第三层
-                    { width: 200, height: 160, yOffset: 340 },
-                    // 顶层
-                    { width: 120, height: 120, yOffset: 440 }
+                // 定义树的层级结构：[宽度, 高度]
+                // 这种定义方式更容易控制三角形的形态
+                this.levels = [
+                    { width: 320, height: 160 }, // 底部最宽
+                    { width: 260, height: 140 },
+                    { width: 200, height: 120 },
+                    { width: 140, height: 100 },
+                    { width: 80, height: 80 }   // 顶部最尖
                 ];
+                // 计算每一层的起始Y坐标，让它们稍微重叠
+                this.levelOffsets = [];
+                let currentY = this.y - 60; // 从树干上方一点开始
+                for(let level of this.levels) {
+                    this.levelOffsets.push(currentY);
+                    currentY -= (level.height * 0.75); // 0.75 表示每层覆盖上一层的 1/4
+                }
             }
 
             draw() {
                 // 1. 画树干
-                ctx.fillStyle = '#3e2723';
-                // 树干从底部 (this.y) 向上画 trunkHeight 的高度
+                ctx.fillStyle = '#2c1e18'; // 更深更真实的木色
                 ctx.fillRect(this.x - this.trunkWidth / 2, this.y - this.trunkHeight, this.trunkWidth, this.trunkHeight);
 
-                // 2. 画树冠层
-                this.layers.forEach(layer => {
-                    const baseY = this.y - layer.yOffset;
+                // 2. 画松树枝叶 (Jagged Branches)
+                // 从下往上画，确保覆盖关系正确
+                for (let i = 0; i < this.levels.length; i++) {
+                    const level = this.levels[i];
+                    const baseY = this.levelOffsets[i];
                     
-                    for(let i=0; i<5; i++) {
-                        ctx.beginPath();
-                        const colorVar = random(-20, 20);
-                        ctx.fillStyle = `rgb(${20 + colorVar}, ${80 + colorVar}, ${30 + colorVar})`;
-                        
-                        ctx.moveTo(this.x, baseY - layer.height);
-                        ctx.quadraticCurveTo(
-                            this.x - layer.width / 2 - i*5, baseY + i*10, 
-                            this.x, baseY + i*5
-                        );
-                        ctx.quadraticCurveTo(
-                            this.x + layer.width / 2 + i*5, baseY + i*10, 
-                            this.x, baseY - layer.height
-                        );
-                        ctx.fill();
-                        ctx.closePath();
-                    }
-                });
+                    // 为了增加质感，我们在同一层画三次，颜色稍微不同，稍微错位
+                    // 模拟茂密的针叶
+                    this.drawJaggedLayer(this.x, baseY, level.width, level.height, '#1a472a'); // 深影
+                    this.drawJaggedLayer(this.x, baseY - 5, level.width * 0.95, level.height, '#2d5a3f'); // 中间色
+                    this.drawJaggedLayer(this.x, baseY - 10, level.width * 0.9, level.height, '#437c56'); // 亮面
+                }
                 
                 // 3. 画顶部的星星
-                const topLayer = this.layers[this.layers.length-1];
-                // 动态计算星星位置，确保它紧贴最上层树叶的尖端
-                const starY = this.y - topLayer.yOffset - topLayer.height;
-                this.drawStar(this.x, starY, 16, '#ffd700');
+                const topY = this.levelOffsets[this.levels.length-1] - this.levels[this.levels.length-1].height + 10;
+                this.drawStar(this.x, topY, 18, '#ffecb3');
+            }
+
+            // 新的绘制函数：绘制锯齿状的三角形层
+            drawJaggedLayer(x, y, w, h, color) {
+                ctx.beginPath();
+                ctx.fillStyle = color;
+                
+                const halfW = w / 2;
+                const steps = 8; // 每一侧有多少个锯齿
+                
+                // 左侧顶点
+                ctx.moveTo(x, y - h);
+                
+                // 左侧锯齿边缘 (向下画)
+                for(let i = 1; i <= steps; i++) {
+                    const progress = i / steps;
+                    const currentY = (y - h) + (h * progress);
+                    const currentX = x - (halfW * progress); // 线性变宽
+                    
+                    // 锯齿的 "内凹" 点 (让树看起来更有刺)
+                    if (i < steps) {
+                         // 向外延伸的点
+                        ctx.lineTo(currentX, currentY);
+                        // 向内收缩的点 (制造缺口)
+                        ctx.lineTo(currentX + 15, currentY + (h/steps)*0.5); 
+                    } else {
+                        // 最后一个点直接到底角
+                        ctx.lineTo(x - halfW, y);
+                    }
+                }
+
+                // 底部边缘 (稍微带点弧度，不要完全平直)
+                ctx.quadraticCurveTo(x, y + 10, x + halfW, y);
+
+                // 右侧锯齿边缘 (向上画)
+                for(let i = steps - 1; i >= 0; i--) {
+                    const progress = i / steps;
+                    const currentY = (y - h) + (h * progress);
+                    const currentX = x + (halfW * progress);
+
+                    if (i > 0) {
+                        // 向内收缩的点
+                        ctx.lineTo(currentX - 15, currentY + (h/steps)*0.5);
+                         // 向外延伸的点
+                        ctx.lineTo(currentX, currentY);
+                    } else {
+                        ctx.lineTo(x, y - h);
+                    }
+                }
+
+                ctx.fill();
+                ctx.closePath();
             }
 
             drawStar(cx, cy, outerRadius, color) {
@@ -149,8 +188,8 @@
                 ctx.lineTo(cx, cy - outerRadius);
                 ctx.closePath();
                 ctx.fillStyle = color;
-                ctx.shadowColor = '#ffd700';
-                ctx.shadowBlur = 30;
+                ctx.shadowColor = '#fff';
+                ctx.shadowBlur = 40;
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
@@ -160,14 +199,14 @@
             constructor(x, y, color) {
                 this.x = x;
                 this.y = y;
-                this.radius = random(3, 5);
+                this.radius = random(2, 4); // 灯稍微小一点，更精致
                 this.color = color;
-                this.blinkSpeed = random(0.02, 0.05);
+                this.blinkSpeed = random(0.01, 0.04);
                 this.angle = random(0, Math.PI * 2);
             }
 
             draw() {
-                const alpha = (Math.sin(this.angle) + 1) / 2 * 0.8 + 0.2;
+                const alpha = (Math.sin(this.angle) + 1) / 2 * 0.7 + 0.3;
                 this.angle += this.blinkSpeed;
 
                 ctx.beginPath();
@@ -175,7 +214,7 @@
                 ctx.fillStyle = this.color;
                 
                 ctx.shadowColor = this.color;
-                ctx.shadowBlur = 20 * alpha;
+                ctx.shadowBlur = 15 * alpha;
                 ctx.globalAlpha = alpha;
                 ctx.fill();
                 
@@ -189,14 +228,14 @@
             constructor(x, y, color) {
                 this.x = x;
                 this.y = y;
-                this.radius = random(6, 10);
+                this.radius = random(4, 7); // 装饰球也小一点
                 this.color = color;
             }
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
                 let gradient = ctx.createRadialGradient(this.x - this.radius/3, this.y - this.radius/3, this.radius/10, this.x, this.y, this.radius);
-                gradient.addColorStop(0, 'white');
+                gradient.addColorStop(0, '#fff');
                 gradient.addColorStop(1, this.color);
                 ctx.fillStyle = gradient;
                 ctx.fill();
@@ -211,9 +250,9 @@
             reset() {
                 this.x = random(0, width);
                 this.y = random(-height, 0);
-                this.radius = random(1, 3);
-                this.speed = random(1, 3);
-                this.drift = random(-0.5, 0.5);
+                this.radius = random(0.5, 2.5);
+                this.speed = random(0.5, 2);
+                this.drift = random(-0.3, 0.3);
             }
             update() {
                 this.y += this.speed;
@@ -225,7 +264,7 @@
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
                 ctx.fill();
                 ctx.closePath();
             }
@@ -237,29 +276,43 @@
             baubles = [];
             snow = [];
 
-            const lightColors = ['#ff5f5f', '#ffff5f', '#5fffff', '#ff5fff'];
-            const baubleColors = ['#c0392b', '#d4af37', '#2980b9', '#27ae60'];
+            const lightColors = ['#ff4d4d', '#ffeb3b', '#4dd0e1', '#e040fb'];
+            // 使用更古典的装饰球颜色
+            const baubleColors = ['#b71c1c', '#fbc02d', '#1565c0', '#2e7d32']; 
 
-            tree.layers.forEach((layer, index) => {
-                const count = (index + 1) * 12; // 稍微减少一点装饰物数量，避免太拥挤
-                const baseY = tree.y - layer.yOffset;
+            // 在新的三角形区域内生成装饰物
+            for (let i = 0; i < tree.levels.length; i++) {
+                const level = tree.levels[i];
+                const baseY = tree.levelOffsets[i];
                 
-                for (let i = 0; i < count; i++) {
-                    const relativeY = random(0, layer.height);
-                    const currentWidth = layer.width * (relativeY / layer.height);
-                    // 修正装饰物生成范围，让它们更贴合新的树形
+                // 增加密度，因为现在树更紧凑了
+                const count = (i + 1) * 10 + 10; 
+                
+                for (let j = 0; j < count; j++) {
+                    const relativeY = random(0, level.height * 0.8); // 限制高度，别画到锯齿外面太远
+                    const wRatio = relativeY / level.height;
+                    const currentWidth = level.width * wRatio;
+                    
+                    // 严格限制X范围在三角形内部
                     const x = random(tree.x - currentWidth / 2 + 10, tree.x + currentWidth / 2 - 10);
-                    const y = baseY - relativeY;
+                    // 修正 Y 坐标计算：
+                    // 层顶是 (baseY - level.height), 层底是 baseY
+                    // 越接近顶端 (relativeY 越小)，宽度越窄
+                    const y = (baseY - level.height) + relativeY;
 
-                    if (Math.random() > 0.3) {
+                    // 简单碰撞检测：确保不会生成在"锯齿"的空隙里（大致估算）
+                    // 越往下层，y越大。
+                    if (y > baseY - 10) continue; 
+
+                    if (Math.random() > 0.4) {
                          lights.push(new Light(x, y, lightColors[Math.floor(random(0, lightColors.length))]));
                     } else {
                         baubles.push(new Bauble(x, y, baubleColors[Math.floor(random(0, baubleColors.length))]));
                     }
                 }
-            });
+            }
 
-            for(let i=0; i< 150; i++) {
+            for(let i=0; i< 200; i++) { // 更多的雪花
                 snow.push(new Snowflake());
             }
         }
